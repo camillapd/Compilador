@@ -1,27 +1,27 @@
 class AFN:
     def __init__(self):
-        self.grafo = {}
+        self.afn1 = {}
         self.estado_inicial = None
         self.estados_finais = []
 
-        # o afn é um grafo
+        # o afn é um afn1
         # é um dicionário no qual a chave é o vértice e os valores são listas de vértices
         # o vértice é um estado (e.g S1) e as listas de vértices são as transições (e.g S1->S2,S3)
 
     def add_estado(self, estado):
-        if estado not in self.grafo:
-            self.grafo[estado] = []
+        if estado not in self.afn1:
+            self.afn1[estado] = []
 
     def add_transicao(self, estado1, estado2, valor):
-        if estado1 in self.grafo and estado2 in self.grafo:
-            self.grafo[estado1].append((estado2, valor))
+        if estado1 in self.afn1 and estado2 in self.afn1:
+            self.afn1[estado1].append((estado2, valor))
 
     def add_finais(self, estado):
-        if estado in self.grafo:
+        if estado in self.afn1:
             self.estados_finais.append(estado)
 
-    def print_grafo(self):
-        print("Automato:", self.grafo)
+    def print_afn1(self):
+        print("Automato:", self.afn1)
 
 
 def algoritmo_thompson(er):
@@ -80,9 +80,18 @@ def algoritmo_thompson(er):
             # itera pelo afn1 para adicionar os estados e transições no afn novo
             for k in afn1:
                 afn.add_estado(k)
-                for v in afn1[k][v]:
-                    afn.add_transicao(
-                        estado_inicial, afn1.estado_inicial, 'e')  # TODO
+
+                # S1 ----A---> S2
+
+            for i in range(len(list(afn1.values()))):
+                for j in range(len(list(afn1.values())[i])):
+                    afn.add_transicao(estado_inicial, list(afn1.values())[i][j][0], list(afn1.values())[i][j][1])
+                    print(list(afn1.values())[i][j][0], 'i,j,0') # o estado em que vai a transição
+                    print(list(afn1.values())[i][j][1], 'i,j,1') # o valor
+
+            # for v in afn1[k][v]:
+            #       afn.add_transicao(
+            #          estado_inicial, afn1.estado_inicial, 'e')  # TODO
                     # afn.estados_finais.append(x) TODO adicionar os estados finais do afn1 no afn
 
             # afn.add_transicao(x, afn1.estado_inicial, 'e') TODO adicionar transição epsilon do estado final pro inicial
@@ -108,6 +117,13 @@ def algoritmo_thompson(er):
 
             # adiciona transição do novo afn pro afn1
             # TODO por o loop
+            for i in range(len(list(afn1.values()))):
+                for j in range(len(list(afn1.values())[i])):
+                    # checar se é estado final antes
+                    afn.add_transicao(estado_inicial, list(afn1.values())[i][j][0], list(afn1.values())[i][j][1])
+                    print(list(afn1.values())[i][j][0], 'i,j,0') # o estado em que vai a transição
+                    print(list(afn1.values())[i][j][1], 'i,j,1') # o valor
+            
             afn.add_estado(afn1.estados_finais[0])
             afn.add_transicao(afn1.estado_inicial, afn1.estados_finais[0], list(
                 afn1.keys())[1])  # list é o valor da transição
@@ -147,18 +163,18 @@ def algoritmo_thompson(er):
 
 # algoritmo_thompson("ab|*a.b.b.")
 
-grafo = AFN()
+afn1 = AFN()
 
-grafo.add_estado("S1")
-grafo.add_estado("S2")
-grafo.add_estado("S3")
-grafo.add_estado("S4")
+afn1.add_estado("S1")
+afn1.add_estado("S2")
+afn1.add_estado("S3")
+afn1.add_estado("S4")
 
-grafo.add_transicao("S1", "S2", "a")
-grafo.add_transicao("S2", "S3", "b")
-grafo.add_transicao("S3", "S4", "a")
-grafo.add_transicao("S4", "S4", "a")
+afn1.add_transicao("S1", "S2", "a")
+afn1.add_transicao("S2", "S3", "b")
+afn1.add_transicao("S3", "S4", "a")
+afn1.add_transicao("S4", "S4", "a")
 
-grafo.print_grafo()
+afn1.print_afn1()
 
 # er = "(((a,b)+(a,e)+).)*"

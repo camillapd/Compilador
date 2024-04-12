@@ -1,73 +1,26 @@
-class State:
-    def __init__(self, is_final=False):
-        self.is_final = is_final
-        self.transitions = {}
+grafo = {'SA':[('S2','a'),('S3','b'),('S4','b')], 'SB': [('S5','a')]}
 
-class AFN:
-    def __init__(self):
-        self.states = []
-        self.start_state = None
-        self.final_states = []
+# print(grafo)
 
-    def add_state(self, state):
-        self.states.append(state)
-        if state.is_final:
-            self.final_states.append(state)
+for k in grafo:
+    print(k, 'k') # o estado    
 
-    def add_transition(self, from_state, to_state, symbol):
-        from_state.transitions[symbol] = to_state
+for i in range(len(list(grafo.values()))):
+    print(list(grafo.values())[i], 'i') # lista das transições de cada estado
+    for j in range(len(list(grafo.values())[i])):
+        print(list(grafo.values())[i][j], 'i, j') # tupla de cada transição individual
 
-def thompson_algorithm(expression):
-    stack = []
-    for symbol in expression:
-        if symbol == 'ε':
-            start = State()
-            end = State(is_final=True)
-            start.transitions[symbol] = end
-            stack.append(start)
-            stack.append(end)
-        elif symbol == '|':
-            right = stack.pop()
-            left = stack.pop()
-            start = State()
-            end = State(is_final=True)
-            start.transitions['ε'] = left
-            start.transitions['ε'] = right
-            stack.append(start)
-            stack.append(end)
-        elif symbol == '*':
-            state = stack.pop()
-            start = State()
-            end = State(is_final=True)
-            start.transitions['ε'] = state
-            state.transitions['ε'] = end
-            stack.append(start)
-            stack.append(end)
-        elif symbol == '.':
-            right = stack.pop()
-            left = stack.pop()
-            start = State()
-            end = State(is_final=True)
-            start.transitions['ε'] = left
-            left.transitions['ε'] = right
-            stack.append(start)
-            stack.append(end)
-        else:
-            state = State(is_final=True)
-            start = State()
-            start.transitions[symbol] = state
-            stack.append(start)
-            stack.append(state)
-    return stack[0]
+        print(list(grafo.values())[i][j][0], 'i,j,0') # o estado em que vai a transição
+        print(list(grafo.values())[i][j][1], 'i,j,1') # o valor
 
-# Exemplo de uso
-expression = '0|(1(01*(00)*0)*1)*'
-afn = AFN()
-afn.start_state = thompson_algorithm(expression)
-afn.final_states = [afn.start_state]
 
-# Imprimindo o AFN
-for state in afn.states:
-    print(f"Estado: {'Final' if state.is_final else 'Inicial'}")
-    for symbol, next_state in state.transitions.items():
-        print(f"Transição: {symbol} -> Estado: {'Final' if next_state.is_final else 'Inicial'}")
+# TODO
+# for i in grafo:
+#     print(list(grafo.keys())[i])
+
+# remover a recurssão a esquerda / fatorar
+# montar first follow 
+# fazer a tabela de look ahead
+
+# estado final é o nome do token
+# o programa de saída que pede o código
