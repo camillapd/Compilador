@@ -230,7 +230,12 @@ def construcao_subconjuntos(afne):
         else:
             at_fecho.add_transicao(estado, estado, 'fecho (e)')
                 
-    # remove todas as transições 'e' do at_fecho TODO
+    # remove todas as transições vazias do at_fecho 
+    for estado in at_fecho.automato:
+        for j in range(len(at_fecho.automato.get(estado))):
+            if at_fecho.automato.get(estado)[j][1] == 'e':
+                at_fecho.automato.get(estado).remove(at_fecho.automato.get(estado)[j])
+                break
                 
     # (2) converte afne para afn #
     afn = Automato()
@@ -284,7 +289,7 @@ def construcao_subconjuntos(afne):
 
     # (3) converte afn para afd # TODO
 
-    return at_fecho
+    return afn
 
 # meu_novo_afn = algoritmo_thompson("ab|*a.")
 # print(meu_novo_afn.automato)

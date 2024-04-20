@@ -26,7 +26,7 @@ afne.automato = {'S1': [('S2', 'a'), ('S4,S2', 'e')],
 
 afn = Automato()
 
-print(list, 'Fecho')
+
 
 # for k in grafo:
 #     # print(k, 'k')  # o estado
