@@ -14,14 +14,53 @@ class Automato:
     def add_transicao(self, estado1, estado2, valor):
         self.automato[estado1].append((estado2, valor))
 
-def traverse_tree_recursive(node):
-    if not node:
-        return
 
-    print(node.value)  
+# ---------------- FUNÇÕES AUXILIARES ------------------- #
+
+# checa se um automato tem transições vazias
+def tem_transicoes_vazias(transicoes):
+    vazio = False
     
-    for child in node.children:
-        traverse_tree_recursive(child) 
+    for j in range(len(transicoes)):
+        if transicoes[j][1] == 'e':
+            vazio = True
+    
+    return vazio
+
+# percorre as transições de um automato para achar os estados que tem transições vazias
+def achar_transicoes_vazias(transicoes):
+    for j in range(len(transicoes)):
+        if transicoes[j][1] == 'e':
+            return transicoes[j][0]
+
+# percorre o atne para calcular a árvore o valor do fecho
+# dos estados que tem transição vazia
+def percorrer_automato(estado, automato, visitados, res = ""):
+    
+    # a folha da árvore é se quando o estado não tem transições vazias
+    # então o fecho e dele é ele mesmo
+    if not tem_transicoes_vazias(automato.get(estado)):
+        res = estado + "," + res
+        return res
+
+    # o estado_vazio é o estado em que o meu estado atual está indo com uma transição vazia
+    estado_vazio = achar_transicoes_vazias(automato.get(estado))
+    res = estado_vazio + "," + res 
+
+    # checo item a item dentro da lista de estados em que meu estado atual vai
+    # com transição vazia
+    list_estados = estado_vazio.split(",")
+    for item in list_estados:  
+        # if para checar se o estado atual não está na transição da transição vazia dele
+        # e.g. S1 --e--> S2 e S2 --e--> S1
+        if item not in visitados:
+            visitados = item + visitados
+            res = percorrer_automato(item, automato, visitados, res)
+        
+    return res  
+
+
+# ---------------------------- FUNÇÕES PRINCIPAIS ------------------------------ #
 
 # ER -> AFNE
 def algoritmo_thompson(er):
@@ -160,26 +199,36 @@ def construcao_subconjuntos(afne):
 
     # copia o afne pro automato com fecho epsilon (at_fecho)
     for estado in afne.automato:
-        if estado == afne.estado.inicial:
+        if estado == afne.estado_inicial:
             at_fecho.add_estado(estado)
             at_fecho.estado_inicial = estado
         if estado in afne.estados_finais:
             at_fecho.add_estado(estado)
-            at_fecho.estado_final.append(estado)
+            at_fecho.estados_finais.append(estado)
         for j in range(len(afne.automato.get(estado))):
             at_fecho.add_estado(estado)
             at_fecho.add_transicao(estado, afne.automato.get(estado)[
                 j][0], afne.automato.get(estado)[j][1])
+    
+    res_fecho = None
 
     # adiciona fecho epsilon no at_fecho TODO
     for estado in afne.automato:
-        for j in range(len(afne.automato.get(estado))):
-            if afne.automato.get(estado)[j][1] == 'e':
-                res =  afne.automato.get(estado)[j][0]
-                # recursivamente pegar fecho (e) de res e somar ao estado embaixo
-                # at_fecho.add_transicao(estado, estado + coisas, 'fecho (e)')
-            else:
-                at_fecho.add_transicao(estado, estado, 'fecho (e)')
+        if tem_transicoes_vazias(afne.automato.get(estado)):
+            res = percorrer_automato(estado,afne.automato,estado)
+            res = res + estado
+            
+            # para arrumar a resposta da função que calcula os fechos
+            # 1- converto para set para remover repetidos (usando as vírgulas como separador)
+            # 2- converto para lista e removo espaços em branco
+            # 3- converto pra string colocando vírgulas de novo para separar os estados
+            fecho_e = list(set(res.split(',')))
+            # fecho_e.remove("")
+            fecho_e = ",".join(fecho_e)
+
+            at_fecho.add_transicao(estado, fecho_e, 'fecho (e)')
+        else:
+            at_fecho.add_transicao(estado, estado, 'fecho (e)')
                 
     # remove todas as transições 'e' do at_fecho TODO
                 
@@ -235,11 +284,23 @@ def construcao_subconjuntos(afne):
 
     # (3) converte afn para afd # TODO
 
-    return afd
+    return at_fecho
 
-meu_novo_afn = algoritmo_thompson("ab|*a.")
-print(meu_novo_afn.automato)
-print(meu_novo_afn.estado_inicial)
-print(meu_novo_afn.estados_finais)
+# meu_novo_afn = algoritmo_thompson("ab|*a.")
+# print(meu_novo_afn.automato)
+# print(meu_novo_afn.estado_inicial)
+# print(meu_novo_afn.estados_finais)
 
 # er = "(((a,b)+(a,e)+).)*"
+
+afne = Automato()
+afne.estado_inicial = 'S1'
+afne.estados_finais.append('S3')
+afne.automato = {'S1': [('S2', 'a'), ('S4,S2', 'e')],
+                 'S2': [('S3', 'a'), ('S1,S3', 'e')],
+                 'S3': [('S3', 'a')],
+                 'S4': [('S4', 'a')]}
+
+res = construcao_subconjuntos(afne)
+
+print(res.automato, 'fim')
