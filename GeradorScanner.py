@@ -20,12 +20,13 @@ class Automato:
 # checa se um automato tem transições vazias
 def tem_transicoes_vazias(transicoes):
     vazio = False
-    
+
     for j in range(len(transicoes)):
         if transicoes[j][1] == 'e':
             vazio = True
-    
+
     return vazio
+
 
 # percorre as transições de um automato para achar os estados que tem transições vazias
 def achar_transicoes_vazias(transicoes):
@@ -33,10 +34,11 @@ def achar_transicoes_vazias(transicoes):
         if transicoes[j][1] == 'e':
             return transicoes[j][0]
 
+
 # percorre o atne para calcular a árvore o valor do fecho
 # dos estados que tem transição vazia
-def percorrer_automato(estado, automato, visitados, res = ""):
-    
+def percorrer_automato(estado, automato, visitados, res=""):
+
     # a folha da árvore é se quando o estado não tem transições vazias
     # então o fecho e dele é ele mesmo
     if not tem_transicoes_vazias(automato.get(estado)):
@@ -45,19 +47,19 @@ def percorrer_automato(estado, automato, visitados, res = ""):
 
     # o estado_vazio é o estado em que o meu estado atual está indo com uma transição vazia
     estado_vazio = achar_transicoes_vazias(automato.get(estado))
-    res = estado_vazio + "," + res 
+    res = estado_vazio + "," + res
 
     # checo item a item dentro da lista de estados em que meu estado atual vai
     # com transição vazia
     list_estados = estado_vazio.split(",")
-    for item in list_estados:  
+    for item in list_estados:
         # if para checar se o estado atual não está na transição da transição vazia dele
         # e.g. S1 --e--> S2 e S2 --e--> S1
         if item not in visitados:
             visitados = item + visitados
             res = percorrer_automato(item, automato, visitados, res)
-        
-    return res  
+
+    return res
 
 
 # ---------------------------- FUNÇÕES PRINCIPAIS ------------------------------ #
@@ -188,6 +190,7 @@ def algoritmo_thompson(er):
 
     return pilha_afn[0]
 
+
 # AFNE -> AFN -> AFD
 def construcao_subconjuntos(afne):
     pilha = []
@@ -209,15 +212,13 @@ def construcao_subconjuntos(afne):
             at_fecho.add_estado(estado)
             at_fecho.add_transicao(estado, afne.automato.get(estado)[
                 j][0], afne.automato.get(estado)[j][1])
-    
-    res_fecho = None
 
     # adiciona fecho epsilon no at_fecho TODO
     for estado in afne.automato:
         if tem_transicoes_vazias(afne.automato.get(estado)):
-            res = percorrer_automato(estado,afne.automato,estado)
+            res = percorrer_automato(estado, afne.automato, estado)
             res = res + estado
-            
+
             # para arrumar a resposta da função que calcula os fechos
             # 1- converto para set para remover repetidos (usando as vírgulas como separador)
             # 2- converto para lista e removo espaços em branco
@@ -229,37 +230,38 @@ def construcao_subconjuntos(afne):
             at_fecho.add_transicao(estado, fecho_e, 'fecho (e)')
         else:
             at_fecho.add_transicao(estado, estado, 'fecho (e)')
-                
-    # remove todas as transições vazias do at_fecho 
+
+    # remove todas as transições vazias do at_fecho
     for estado in at_fecho.automato:
         for j in range(len(at_fecho.automato.get(estado))):
             if at_fecho.automato.get(estado)[j][1] == 'e':
-                at_fecho.automato.get(estado).remove(at_fecho.automato.get(estado)[j])
+                at_fecho.automato.get(estado).remove(
+                    at_fecho.automato.get(estado)[j])
                 break
-                
+
     # (2) converte afne para afn #
     afn = Automato()
-    
-    for estado in at_fecho.automato:
-        afn.add_estado(estado)
-        if estado == at_fecho.estado_inicial:
-            afn.add_estado(at_fecho.automato.get(estado)[-1][0])
-            afn.estado_inicial = at_fecho.automato.get(estado)[-1][0]
-        if estado in at_fecho.estados_finais:
-            afn.add_estado(estado)
-            afn.estados_finais.append(estado)
-        else:
-            afn.add_estado(estado)
 
+    for estado in at_fecho.automato:
         # o valor do fecho do estado atual
         fecho_estado = at_fecho.automato.get(estado)[-1][0]
+        afn.add_estado(estado)
+        # (2a) adiciono todos os estados do at_fecho no afn novo #
+        if estado == at_fecho.estado_inicial:
+            # mudar para lista se der problemas deposi TODO #
+            afn.estado_inicial = fecho_estado
+        if estado in at_fecho.estados_finais:
+            afn.estados_finais.append(estado)         
+
         # o símbolo da setinha que vou colocar para o novo estado do afn
         fecho_res = ""
 
+        # não faço o loop pelo último elemento da lista (fecho e)
         for j in range(len(at_fecho.automato.get(estado))-1):
 
-            # checo se o valor do fecho é uma lista de estados
-            # se for eu coloco os valores em uma lista e itero por eles
+            # (2b) eu preciso olhar para o valor do fecho na transição atual #
+            # e.g: S1 --a--> S2 e fecho (e) S1 = {S1,S2,S3,S4} :: eu pego o segundo valor
+            # então checo se esse valor é uma lista de estados se for eu coloco os valores em uma lista e itero por eles
             if "," in fecho_estado:
                 list_fecho = fecho_estado.split(",")
                 for fecho in list_fecho:
@@ -268,24 +270,29 @@ def construcao_subconjuntos(afne):
                     # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
                     if len(at_fecho.automato.get(fecho)) > 1:
 
-                        # o destino é o valor da transição, para eu usar o fecho desse estado
-                        fecho_destino = at_fecho.automato.get(fecho)[j][0]
-                        um_fecho = at_fecho.automato.get(
-                            fecho_destino)[-1][0]
+                        # (2c) agora com o valor do fecho, eu salvo o estado em que ele vai com a transição que quero #
+                        # (2d) com o estado destino eu pego o fecho deste estado #
+                        estado_destino = at_fecho.automato.get(fecho)[j][0]
+                        fecho_destino = at_fecho.automato.get(
+                            estado_destino)[-1][0]
 
                         # checagem para não colocar valores repetidos na transição nova
-                        if um_fecho not in fecho_res:
+                        if fecho_destino not in fecho_res:
                             # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
-                            fecho_res = um_fecho + fecho_res
+                            fecho_res = fecho_destino + fecho_res
             else:
                 # aqui eu checo se tem mais de uma transição nesse estado
                 # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
                 if len(at_fecho.automato.get(fecho_estado)) > 1:
-                    fecho_destino = at_fecho.automato.get(fecho_estado)[j][0]
-                    fecho_res = at_fecho.automato.get(fecho_destino)[-1][0]
+                    # mesmo que (2c) e (2d)
+                    estado_destino = at_fecho.automato.get(fecho_estado)[
+                        j][0]
+                    fecho_res = at_fecho.automato.get(estado_destino)[-1][0]
 
+            # (2e) aqui adiciono a transição, que vai do meu estado para os fechos desse estado,
+            # e vejo qual o estado transição deles e pego o fecho #
             afn.add_transicao(estado, fecho_res,
-                            at_fecho.automato.get(estado)[j][1])                           
+                              at_fecho.automato.get(estado)[j][1])
 
     # (3) converte afn para afd # TODO
 
@@ -298,12 +305,13 @@ def construcao_subconjuntos(afne):
 
 # er = "(((a,b)+(a,e)+).)*"
 
+
 afne = Automato()
 afne.estado_inicial = 'S1'
 afne.estados_finais.append('S3')
 afne.automato = {'S1': [('S2', 'a'), ('S4,S2', 'e')],
                  'S2': [('S3', 'a'), ('S1,S3', 'e')],
-                 'S3': [('S3', 'a')],
+                 'S3': [],
                  'S4': [('S4', 'a')]}
 
 res = construcao_subconjuntos(afne)
