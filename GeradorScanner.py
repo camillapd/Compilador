@@ -279,7 +279,8 @@ def construcao_subconjuntos(afne):
                         # checagem para não colocar valores repetidos na transição nova
                         if fecho_destino not in fecho_res:
                             # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
-                            fecho_res = fecho_destino + fecho_res
+                            fecho_res = fecho_destino + ',' + fecho_res
+                            fecho_res = fecho_res[:-1] # para remover a última vírgula
             else:
                 # aqui eu checo se tem mais de uma transição nesse estado
                 # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
