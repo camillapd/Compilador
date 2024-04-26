@@ -191,11 +191,8 @@ def algoritmo_thompson(er):
     return pilha_afn[0]
 
 
-# AFNE -> AFN -> AFD
+# AFNE -> Automato com fecho (e) - as transições vazias -> AFN
 def construcao_subconjuntos(afne):
-    pilha = []
-    pilha.append(afne)
-    afd = Automato()
 
     # (1) calcula o fecho epsilon #
     at_fecho = Automato()
@@ -251,7 +248,7 @@ def construcao_subconjuntos(afne):
             # mudar para lista se der problemas deposi TODO #
             afn.estado_inicial = fecho_estado
         if estado in at_fecho.estados_finais:
-            afn.estados_finais.append(estado)         
+            afn.estados_finais.append(estado)
 
         # o símbolo da setinha que vou colocar para o novo estado do afn
         fecho_res = ""
@@ -280,7 +277,8 @@ def construcao_subconjuntos(afne):
                         if fecho_destino not in fecho_res:
                             # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
                             fecho_res = fecho_destino + ',' + fecho_res
-                            fecho_res = fecho_res[:-1] # para remover a última vírgula
+                            # para remover a última vírgula
+                            fecho_res = fecho_res[:-1]
             else:
                 # aqui eu checo se tem mais de uma transição nesse estado
                 # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
@@ -295,9 +293,67 @@ def construcao_subconjuntos(afne):
             afn.add_transicao(estado, fecho_res,
                               at_fecho.automato.get(estado)[j][1])
 
-    # (3) converte afn para afd # TODO
-
     return afn
+
+# AFN -> AFD
+
+
+def conversao_afd(afn):
+    afd = Automato()
+    cria_afd = True
+
+    # o novo estado inicial são os estados inicias anteriores #
+    afd.add_estado(afn.estado_inicial)
+    afd.estado_inicial = afn.estado_inicial
+    estado_destino = afn.estado_inicial
+    print(afd.automato)
+
+    # no loop eu adiciono os estados e transições conforme vão aparecendo
+    # nas transições do estado inicial e estados consequentes
+    # o loop só termina quando novos estados de transição já estão nos estados do afd
+
+    while cria_afd:
+        estado = list(afd.automato)[-1]
+        if "," not in estado:
+            for j in range(len(afn.automato.get(estado))):
+                estado_destino = afn.automato.get(estado)[j][0]
+                if "," not in estado_destino:
+                    simbolo = afn.automato.get(estado)[j][1]
+                    afd.add_transicao(estado, estado_destino, simbolo)
+                    if estado_destino in afn.estados_finais or len(afn.automato.get(estado_destino)) != 0:
+                        afd.add_estado(estado_destino)
+                    elif len(afn.automato.get(estado_destino)) == 0:
+                        pass
+                else:
+                    list_estados = estado.split(",")
+                    for item in list_estados:
+                        for j in range(len(afn.automato.get(afn.item))):
+                            estado_destino = afn.automato.get(afn.item)[j][0]
+                            simbolo = afn.automato.get(afn.item)[j][1]
+                            estado_res2 = item + ',' + estado_res2
+        if estado_destino in afd.automato.keys() and (len(afd.automato.get(estado_destino)) >= 1 or estado_destino in afn.estados_finais):
+            cria_afd = False
+
+        # else:
+        #     list_estados = estado.split(",")
+        #     for item in list_estados:
+        #         for j in range(len(afn.automato.get(afn.item))):
+        #             estado_destino = afn.automato.get(afn.item)[j][0]
+        #             simbolo = afn.automato.get(afn.item)[j][1]
+        #             estado_res = item + ',' + estado_res
+
+            # res = list(set(estado_res.split(',')))
+            # res.remove("")
+            # res = ",".join(res)
+            # afd.add_transicao(res, estado_destino, simbolo)
+            # afd.add_estado(estado_destino)
+
+    # adiciona estado final, mudar depois TODO
+    for estado in afd.automato:
+        if estado in afn.estados_finais:
+            afd.estados_finais.append(estado)
+
+    return afd
 
 # meu_novo_afn = algoritmo_thompson("ab|*a.")
 # print(meu_novo_afn.automato)
@@ -308,13 +364,20 @@ def construcao_subconjuntos(afne):
 
 
 afne = Automato()
-afne.estado_inicial = 'S1'
-afne.estados_finais.append('S3')
-afne.automato = {'S1': [('S2', 'a'), ('S4,S2', 'e')],
-                 'S2': [('S3', 'a'), ('S1,S3', 'e')],
-                 'S3': [],
-                 'S4': [('S4', 'a')]}
+afne.estado_inicial = 'S0,S1,S3'
+afne.estados_finais.append('S2')
+afne.automato = {'S0': [('S2,S3', 'a')],
+                 'S1': [('S2', 'a')],
+                 'S2': [('S1', 'b')],
+                 'S3': [('S3', 'a')]}
 
-res = construcao_subconjuntos(afne)
+# {'S0,S1,S3': [('S2,S3', 'a')],
+#  'S2,S3': [('S3', 'a'),('S1','b')],
+#  'S1': [('S2', 'a')],
+#  'S3': [('S3', 'a')]}
+#  'S2': [('S1', 'b')],
+# estados_finais = {S0,S1,S3} {S2,S3} S1 S3 S2
+
+res = conversao_afd(afne)
 
 print(res.automato, 'fim')

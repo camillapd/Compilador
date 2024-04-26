@@ -18,14 +18,18 @@ class Automato:
 
 afne = Automato()
 afne.estado_inicial = 'S1'
-afne.estados_finais.append('S3')
-afne.automato = {'S1': [('S2', 'a'), ('S4,S2', 'e')],
-                 'S2': [('S3', 'a'), ('S1,S3', 'e')],
-                 'S3': [('S3', 'a')],
-                 'S4': [('S4', 'a')]}
+afne.estados_finais.append('S10')
+afne.automato = {'S1': [('S1,S2,S3,S5,S6,S9', 'a')],
+                 'S2': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S3': [('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S4': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S5': [('S1,S2,S3,S5,S6,S9', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S6': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S7': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+                 'S9': [('S10', 'a')],
+                 'S10': []}
 
 afn = Automato()
-
 
 
 # for k in grafo:
@@ -42,15 +46,6 @@ afn = Automato()
 #             # print(list(grafo.values())[i][j][1], 'i,j,1')  # o valor
 
 x = grafo.get("SA")
-
-
-
-
-
-
-
-
-
 
 
 # TODO

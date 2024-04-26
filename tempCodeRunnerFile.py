@@ -1,0 +1,1 @@
+print(estado_destino, 'e')
