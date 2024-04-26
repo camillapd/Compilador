@@ -295,63 +295,96 @@ def construcao_subconjuntos(afne):
 
     return afn
 
+
 # AFN -> AFD
-
-
 def conversao_afd(afn):
     afd = Automato()
     cria_afd = True
+    # aqui eu crio uma pilha em que vai ter os estados novos do afd
+    pilha = []
 
-    # o novo estado inicial são os estados inicias anteriores #
+    # 1 - o novo estado inicial são os estados inicias anteriores #
     afd.add_estado(afn.estado_inicial)
     afd.estado_inicial = afn.estado_inicial
     estado_destino = afn.estado_inicial
-    print(afd.automato)
+    pilha.append(afn.estado_inicial)
 
     # no loop eu adiciono os estados e transições conforme vão aparecendo
     # nas transições do estado inicial e estados consequentes
     # o loop só termina quando novos estados de transição já estão nos estados do afd
 
+    # 2 - loop em que adiciono os estados e transições do afd #
     while cria_afd:
-        estado = list(afd.automato)[-1]
+        estado_res = {}
+        # na pilha eu removo os estados e faço minha conversão
+        # eu pego de uma pilha porque no caso de eu adicionar dois estados de uma vez no afd
+        # nenhum estado vai ser esquecido
+        estado = pilha.pop()
+        count = 0
+
         if "," not in estado:
             for j in range(len(afn.automato.get(estado))):
+                # aqui eu pego o estado da transição (no afn) do estado atual do afd e o símbolo de transição
                 estado_destino = afn.automato.get(estado)[j][0]
-                if "," not in estado_destino:
-                    simbolo = afn.automato.get(estado)[j][1]
-                    afd.add_transicao(estado, estado_destino, simbolo)
-                    if estado_destino in afn.estados_finais or len(afn.automato.get(estado_destino)) != 0:
-                        afd.add_estado(estado_destino)
-                    elif len(afn.automato.get(estado_destino)) == 0:
-                        pass
-                else:
-                    list_estados = estado.split(",")
-                    for item in list_estados:
-                        for j in range(len(afn.automato.get(afn.item))):
-                            estado_destino = afn.automato.get(afn.item)[j][0]
-                            simbolo = afn.automato.get(afn.item)[j][1]
-                            estado_res2 = item + ',' + estado_res2
-        if estado_destino in afd.automato.keys() and (len(afd.automato.get(estado_destino)) >= 1 or estado_destino in afn.estados_finais):
+                simbolo = afn.automato.get(estado)[j][1]
+                # eu adiciono a transição
+                afd.add_transicao(estado, estado_destino, simbolo)
+                # adiciono o estado novo somente se ele tem transições ou se é um estado final
+                # e se já não coloquei ele no afd
+                if (estado_destino in afn.estados_finais or len(afn.automato.get(estado_destino)) > 0) and estado_destino not in afd.automato:
+                    afd.add_estado(estado_destino)
+                    pilha.append(estado_destino)
+                elif len(afn.automato.get(estado_destino)) == 0:
+                    pass
+        else:
+            list_estados = estado.split(",")
+            for item in list_estados:
+                for j in range(len(afn.automato.get(item))):
+                    # aqui eu uso um dicionário para acumular os valores das transições dos estados em que estou iterando
+                    # porque preciso acumular os estados de destino, mas manter o mesmo símbolo
+                    estado_destino = afn.automato.get(item)[j][0]
+                    simbolo = afn.automato.get(item)[j][1]
+
+                    if simbolo in estado_res:
+                        estado_res[simbolo] = estado_res[simbolo] + \
+                            ',' + estado_destino
+                    else:
+                        estado_res[simbolo] = estado_destino
+                    # existe um problema aqui
+                    # provavelmente em todas as partes em que tem mais de um símbolo de transição (e.g: a,b,c em vez de só a)
+                    # consertado aqui TODO checar nas outras partes
+            if len(estado_res) != 0:
+                for simbolo in estado_res:
+                    res = list(set(estado_res.get(simbolo).split(',')))
+                    res = ",".join(res)
+                    if res not in afd.automato:
+                        afd.add_estado(res)
+                        pilha.append(res)
+                    afd.add_transicao(estado, res, simbolo)
+
+        # percorro todo o meu afd
+        # para cada estado em que: tenho transições nele or ele é estado final eu aumento +1
+        for estado2 in afd.automato:
+            if len(afd.automato.get(estado2)) > 0 or estado2 in afn.estados_finais:
+                count = count + 1
+
+        # então nesse if eu checo se o contador tem o mesmo valor do comprimento do afd
+        # ou seja, se todos os meus estados nele tem transições (ou é um estado final)
+        # o que significa que terminei de converter o afn para afd
+        if count == len(afd.automato):
             cria_afd = False
 
-        # else:
-        #     list_estados = estado.split(",")
-        #     for item in list_estados:
-        #         for j in range(len(afn.automato.get(afn.item))):
-        #             estado_destino = afn.automato.get(afn.item)[j][0]
-        #             simbolo = afn.automato.get(afn.item)[j][1]
-        #             estado_res = item + ',' + estado_res
-
-            # res = list(set(estado_res.split(',')))
-            # res.remove("")
-            # res = ",".join(res)
-            # afd.add_transicao(res, estado_destino, simbolo)
-            # afd.add_estado(estado_destino)
-
-    # adiciona estado final, mudar depois TODO
+    # 3 - adiciono estados finais #
+    # um estado não determistico é final se um dos estados que compõe ele era final no afn
     for estado in afd.automato:
-        if estado in afn.estados_finais:
-            afd.estados_finais.append(estado)
+        if "," not in estado:
+            if estado in afn.estados_finais and estado not in afd.estados_finais:
+                afd.estados_finais.append(estado)
+        else:
+            list_estados = estado.split(",")
+            for item in list_estados:
+                if item in afn.estados_finais and estado not in afd.estados_finais:
+                    afd.estados_finais.append(estado)
 
     return afd
 
@@ -366,6 +399,7 @@ def conversao_afd(afn):
 afne = Automato()
 afne.estado_inicial = 'S0,S1,S3'
 afne.estados_finais.append('S2')
+afne.estados_finais.append('S3')
 afne.automato = {'S0': [('S2,S3', 'a')],
                  'S1': [('S2', 'a')],
                  'S2': [('S1', 'b')],
@@ -381,3 +415,4 @@ afne.automato = {'S0': [('S2,S3', 'a')],
 res = conversao_afd(afne)
 
 print(res.automato, 'fim')
+print(res.estados_finais)
