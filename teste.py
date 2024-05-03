@@ -27,7 +27,19 @@ afne.automato = {'S1': [('S1,S2,S3,S5,S6,S9', 'a')],
                  'S6': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
                  'S7': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
                  'S9': [('S10', 'a')],
-                 'S10': []}
+                 'S10': [('S9', 'x')]}
+
+novo = "FIM"
+afne.add_estado(novo)
+for estado in afne.automato:
+    if estado in afne.estados_finais:
+        oi = afne.automato.pop(estado)
+        print(oi)
+        # afne.add_transicao(novo,afne.automato.pop(estado))
+    for j in range(len(afne.automato.get(estado))):
+        pass
+    
+print(afne.automato)
 
 afn = Automato()
 
