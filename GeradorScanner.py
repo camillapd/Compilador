@@ -201,8 +201,8 @@ def algoritmo_thompson(er, nome):
                 simbolo = pilha[i]
             
             afn = Automato()
-            estado_inicial = simbolo.upper() + str(count)
-            estado_final = simbolo.upper() + str(count+1)    
+            estado_inicial = "S" + str(count)
+            estado_final = "S" + str(count+1)    
             afn.add_estado(estado_inicial)
             afn.estado_inicial = estado_inicial
 
@@ -213,9 +213,38 @@ def algoritmo_thompson(er, nome):
 
             pilha_afn.append(afn)
 
-        count = count + 2
+        count = count + 2  
 
-    return pilha_afn[0]
+    # Para renomear o estado final no meu afn para o nome do token #
+    # (1) vou criar um novo automato porque vou mexer em dicionário
+    afn = Automato()
+    # (2) - adiciono o novo estado final nele 
+    afn.add_estado(nome)
+    afn.estados_finais.append(nome)
+
+    # (3) for para copiar o automato antigo para o novo
+    for estado in pilha_afn[0].automato:      
+        if estado == pilha_afn[0].estado_inicial:
+            afn.estado_inicial = estado
+        for j in range(len(pilha_afn[0].automato.get(estado))):
+            estado_destino = pilha_afn[0].automato.get(estado)[j][0]
+            # (3a) para checar se o estado em que tenho transição é o antigo estado final e vai nele mesmo
+            # mantenho o símbolo e mudo o resto
+            if estado in pilha_afn[0].estados_finais:
+                if estado_destino in pilha_afn[0].estados_finais:
+                    afn.add_transicao(nome, nome, pilha_afn[0].automato.get(estado)[j][1])
+                # se for transição para outro estado eu só mudo o estado origem
+                else:
+                    afn.add_transicao(nome, estado_destino, pilha_afn[0].automato.get(estado)[j][1])
+            else:
+                afn.add_estado(estado)
+                # (3b) aqui checo se for transição de um estado comum para o estado final antigo e mudo para o novo
+                if estado_destino in pilha_afn[0].estados_finais:
+                    afn.add_transicao(estado, nome, pilha_afn[0].automato.get(estado)[j][1])
+                else:
+                    afn.add_transicao(estado, estado_destino, pilha_afn[0].automato.get(estado)[j][1])
+
+    return afn
 
 
 # AFNE -> Automato com fecho (e) - as transições vazias -> AFN
@@ -237,7 +266,7 @@ def construcao_subconjuntos(afne):
             at_fecho.add_transicao(estado, afne.automato.get(estado)[
                 j][0], afne.automato.get(estado)[j][1])
 
-    # adiciona fecho epsilon no at_fecho TODO
+    # adiciona fecho epsilon no at_fecho
     for estado in afne.automato:
         if tem_transicoes_vazias(afne.automato.get(estado)):
             res = percorrer_automato(estado, afne.automato, estado)
@@ -261,11 +290,15 @@ def construcao_subconjuntos(afne):
             if at_fecho.automato.get(estado)[j][1] == 'e':
                 at_fecho.automato.get(estado).remove(
                     at_fecho.automato.get(estado)[j])
-                break
+                break       
 
     # (2) converte afne para afn #
     afn = Automato()
 
+    # tem um erro aqui v 
+    # aparece estado "S" no automato
+    # perdeu a numeração
+    # não existe estado "S"
     for estado in at_fecho.automato:
         # o valor do fecho do estado atual
         fecho_estado = at_fecho.automato.get(estado)[-1][0]
@@ -348,7 +381,7 @@ def conversao_afd(afn):
         # nenhum estado vai ser esquecido
         estado = pilha.pop()
         count = 0
-
+ 
         if "," not in estado:
             for j in range(len(afn.automato.get(estado))):
                 # aqui eu pego o estado da transição (no afn) do estado atual do afd e o símbolo de transição
@@ -366,7 +399,7 @@ def conversao_afd(afn):
         else:
             list_estados = estado.split(",")
             for item in list_estados:
-                for j in range(len(afn.automato.get(item))):
+                for j in range(len(afn.automato.get(item))): # TODO
                     # aqui eu uso um dicionário para acumular os valores das transições dos estados em que estou iterando
                     # porque preciso acumular os estados de destino, mas manter o mesmo símbolo
                     estado_destino = afn.automato.get(item)[j][0]
@@ -419,6 +452,16 @@ er = "(((a,b)+(a,e)+).)*"
 er2 = "ab|*a."
 
 res = algoritmo_thompson(er2, "er")
-print(res.automato, 'automato')
+print(res.automato, 'afne')
 print(res.estado_inicial, 'inicial')
-print(res.estados_finais, 'finais')
+print(res.estados_finais, 'finais \n')
+
+res2 = construcao_subconjuntos(res)
+print(res2.automato, 'afn')
+print(res2.estado_inicial, 'inicial')
+print(res2.estados_finais, 'finais \n')
+
+res3 = conversao_afd(res2)
+print(res3.automato, 'afd')
+print(res3.estado_inicial, 'inicial')
+print(res3.estados_finais, 'finais')

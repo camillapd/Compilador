@@ -16,30 +16,54 @@ class Automato:
         self.automato[estado1].append((estado2, valor))
 
 
+# afne.automato = {'S1': [('S1,S2,S3,S5,S6,S9', 'a')],
+#                  'S2': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S3': [('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S4': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S5': [('S1,S2,S3,S5,S6,S9', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S6': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S7': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
+#                  'S9': [('S10', 'a')],
+#                  'S10': [('S9', 'x')]}
+
 afne = Automato()
 afne.estado_inicial = 'S1'
-afne.estados_finais.append('S10')
-afne.automato = {'S1': [('S1,S2,S3,S5,S6,S9', 'a')],
-                 'S2': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S3': [('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S4': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S5': [('S1,S2,S3,S5,S6,S9', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S6': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S7': [('S1,S2,S3,S5,S6,S9,S10', 'a'), ('S1,S3,S4,S5,S6,S9', 'b')],
-                 'S9': [('S10', 'a')],
-                 'S10': [('S9', 'x')]}
+afne.estados_finais.append('S4')
+afne.automato = {'S1': [('S2', 'a')],
+                 'S2': [('S3', 'a'), ('S1', 'b')],
+                 'S3': [('S4', 'b')],
+                 'S4': [('S4', 'a'), ('S4', 'b')]}
 
 novo = "FIM"
-afne.add_estado(novo)
+novo_afne = Automato()
+
 for estado in afne.automato:
-    if estado in afne.estados_finais:
-        oi = afne.automato.pop(estado)
-        print(oi)
-        # afne.add_transicao(novo,afne.automato.pop(estado))
+    novo_afne.add_estado(novo)
+    novo_afne.estados_finais.append(novo)
+    if estado == afne.estado_inicial:
+        novo_afne.estado_inicial = estado
     for j in range(len(afne.automato.get(estado))):
-        pass
+        estado_destino = afne.automato.get(estado)[j][0]
+        if estado in afne.estados_finais:
+            if estado_destino in afne.estados_finais:
+                novo_afne.add_transicao(novo, novo, afne.automato.get(estado)[j][1])
+            else:
+                novo_afne.add_transicao(novo, estado_destino, afne.automato.get(estado)[j][1])
+        else:
+            novo_afne.add_estado(estado)
+            if estado_destino in afne.estados_finais:
+                novo_afne.add_transicao(estado, novo, afne.automato.get(estado)[j][1])
+            else:
+                novo_afne.add_transicao(estado, estado_destino, afne.automato.get(estado)[j][1])
+
+# for estado in afne.automato:
+#     if estado in afne.estados_finais:
+#         afne.automato[novo] = afne.automato.pop(estado)
+        # afne.add_transicao(novo,afne.automato.pop(estado))
+    # for j in range(len(afne.automato.get(estado))):
+    #     pass
     
-print(afne.automato)
+print(novo_afne.automato)
 
 afn = Automato()
 
