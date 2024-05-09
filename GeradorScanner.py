@@ -12,7 +12,8 @@ class Automato:
             self.automato[estado] = []
 
     def add_transicao(self, estado1, estado2, valor):
-        self.automato[estado1].append((estado2, valor))
+        if estado1 in self.automato and (estado2, valor) not in self.automato.get(estado1):
+            self.automato[estado1].append((estado2, valor))
 
 
 # ---------------- FUNÇÕES AUXILIARES ------------------- #
@@ -194,15 +195,15 @@ def algoritmo_thompson(er, nome):
 
             pilha_afn.append(afn)
         else:  # caso é uma letra do alfabeto
-             # por alguma razão quando passo para lista ele conta o escape do \ tambédm (\\) então
-            if pilha[i] == "\\":             
+            # por alguma razão quando passo para lista ele conta o escape do \ tambédm (\\) então
+            if pilha[i] == "\\":
                 simbolo = pilha[i+1]
             else:
                 simbolo = pilha[i]
-            
+
             afn = Automato()
             estado_inicial = "S" + str(count)
-            estado_final = "S" + str(count+1)    
+            estado_final = "S" + str(count+1)
             afn.add_estado(estado_inicial)
             afn.estado_inicial = estado_inicial
 
@@ -213,17 +214,17 @@ def algoritmo_thompson(er, nome):
 
             pilha_afn.append(afn)
 
-        count = count + 2  
+        count = count + 2
 
     # Para renomear o estado final no meu afn para o nome do token #
     # (1) vou criar um novo automato porque vou mexer em dicionário
     afn = Automato()
-    # (2) - adiciono o novo estado final nele 
+    # (2) - adiciono o novo estado final nele
     afn.add_estado(nome)
     afn.estados_finais.append(nome)
 
     # (3) for para copiar o automato antigo para o novo
-    for estado in pilha_afn[0].automato:      
+    for estado in pilha_afn[0].automato:
         if estado == pilha_afn[0].estado_inicial:
             afn.estado_inicial = estado
         for j in range(len(pilha_afn[0].automato.get(estado))):
@@ -232,23 +233,28 @@ def algoritmo_thompson(er, nome):
             # mantenho o símbolo e mudo o resto
             if estado in pilha_afn[0].estados_finais:
                 if estado_destino in pilha_afn[0].estados_finais:
-                    afn.add_transicao(nome, nome, pilha_afn[0].automato.get(estado)[j][1])
+                    afn.add_transicao(
+                        nome, nome, pilha_afn[0].automato.get(estado)[j][1])
                 # se for transição para outro estado eu só mudo o estado origem
                 else:
-                    afn.add_transicao(nome, estado_destino, pilha_afn[0].automato.get(estado)[j][1])
+                    afn.add_transicao(nome, estado_destino,
+                                      pilha_afn[0].automato.get(estado)[j][1])
             else:
                 afn.add_estado(estado)
                 # (3b) aqui checo se for transição de um estado comum para o estado final antigo e mudo para o novo
                 if estado_destino in pilha_afn[0].estados_finais:
-                    afn.add_transicao(estado, nome, pilha_afn[0].automato.get(estado)[j][1])
+                    afn.add_transicao(
+                        estado, nome, pilha_afn[0].automato.get(estado)[j][1])
                 else:
-                    afn.add_transicao(estado, estado_destino, pilha_afn[0].automato.get(estado)[j][1])
+                    afn.add_transicao(estado, estado_destino,
+                                      pilha_afn[0].automato.get(estado)[j][1])
 
     return afn
 
 
 # AFNE -> Automato com fecho (e) - as transições vazias -> AFN
 def construcao_subconjuntos(afne):
+    lista_simbolos = []
 
     # (1) calcula o fecho epsilon #
     at_fecho = Automato()
@@ -284,18 +290,26 @@ def construcao_subconjuntos(afne):
         else:
             at_fecho.add_transicao(estado, estado, 'fecho (e)')
 
-    # remove todas as transições vazias do at_fecho
-    for estado in at_fecho.automato:
-        for j in range(len(at_fecho.automato.get(estado))):
-            if at_fecho.automato.get(estado)[j][1] == 'e':
-                at_fecho.automato.get(estado).remove(
-                    at_fecho.automato.get(estado)[j])
-                break       
+    # remove todas as transições vazias do at_fecho TODO
+    # for estado in at_fecho.automato:
+    #     for j in range(len(at_fecho.automato.get(estado))):
+    #         if at_fecho.automato.get(estado)[j][1] == 'e':
+    #             at_fecho.automato.get(estado).remove(
+    #                 at_fecho.automato.get(estado)[j])
+    #             break
 
     # (2) converte afne para afn #
     afn = Automato()
 
-    # tem um erro aqui v 
+    print(at_fecho.automato, '\n')
+
+    # crio uma lista com símbolos não vazios de transições no meu automato com fecho
+    for estado in at_fecho.automato:
+        for j in range(len(at_fecho.automato.get(estado))-1):
+            if at_fecho.automato.get(estado)[j][1] != 'e' and at_fecho.automato.get(estado)[j][1] not in lista_simbolos:
+                lista_simbolos.append(at_fecho.automato.get(estado)[j][1])
+
+    # tem um erro aqui v
     # aparece estado "S" no automato
     # perdeu a numeração
     # não existe estado "S"
@@ -312,46 +326,49 @@ def construcao_subconjuntos(afne):
 
         # o símbolo da setinha que vou colocar para o novo estado do afn
         fecho_res = ""
+        simbolo_res = ""
 
         # não faço o loop pelo último elemento da lista (fecho e)
         for j in range(len(at_fecho.automato.get(estado))-1):
+            for simbolo in lista_simbolos: # possivelmente gambiarra
+                # (2b) eu preciso olhar para o valor do fecho na transição atual #
+                # e.g: S1 --a--> S2 e fecho (e) S1 = {S1,S2,S3,S4} :: eu pego o segundo valor
+                # então checo se esse valor é uma lista de estados se for eu coloco os valores em uma lista e itero por eles
+                if "," in fecho_estado:
+                    list_fecho = fecho_estado.split(",")
+                    for fecho in list_fecho:
 
-            # (2b) eu preciso olhar para o valor do fecho na transição atual #
-            # e.g: S1 --a--> S2 e fecho (e) S1 = {S1,S2,S3,S4} :: eu pego o segundo valor
-            # então checo se esse valor é uma lista de estados se for eu coloco os valores em uma lista e itero por eles
-            if "," in fecho_estado:
-                list_fecho = fecho_estado.split(",")
-                for fecho in list_fecho:
+                        # aqui eu checo se tem mais de uma transição nesse estado
+                        # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
+                        if len(at_fecho.automato.get(fecho)) > 1 and at_fecho.automato.get(fecho)[j][1] == simbolo:
 
+                            # (2c) agora com o valor do fecho, eu salvo o estado em que ele vai com a transição que quero #
+                            # (2d) com o estado destino eu pego o fecho deste estado #
+                            simbolo_res = simbolo
+                            estado_destino = at_fecho.automato.get(fecho)[j][0]
+                            fecho_destino = at_fecho.automato.get(
+                                estado_destino)[-1][0]
+
+                            # checagem para não colocar valores repetidos na transição nova
+                            if fecho_destino not in fecho_res:
+                                # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
+                                fecho_res = fecho_destino + ',' + fecho_res
+                                # para remover a última vírgula
+                                fecho_res = fecho_res[:-1]
+                else:
                     # aqui eu checo se tem mais de uma transição nesse estado
                     # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
-                    if len(at_fecho.automato.get(fecho)) > 1:
-
-                        # (2c) agora com o valor do fecho, eu salvo o estado em que ele vai com a transição que quero #
-                        # (2d) com o estado destino eu pego o fecho deste estado #
-                        estado_destino = at_fecho.automato.get(fecho)[j][0]
-                        fecho_destino = at_fecho.automato.get(
+                    if len(at_fecho.automato.get(fecho_estado)) > 1 and at_fecho.automato.get(fecho_estado)[j][1] == simbolo:
+                        # mesmo que (2c) e (2d)
+                        simbolo_res = simbolo
+                        estado_destino = at_fecho.automato.get(fecho_estado)[
+                            j][0]
+                        fecho_res = at_fecho.automato.get(
                             estado_destino)[-1][0]
-
-                        # checagem para não colocar valores repetidos na transição nova
-                        if fecho_destino not in fecho_res:
-                            # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
-                            fecho_res = fecho_destino + ',' + fecho_res
-                            # para remover a última vírgula
-                            fecho_res = fecho_res[:-1]
-            else:
-                # aqui eu checo se tem mais de uma transição nesse estado
-                # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
-                if len(at_fecho.automato.get(fecho_estado)) > 1:
-                    # mesmo que (2c) e (2d)
-                    estado_destino = at_fecho.automato.get(fecho_estado)[
-                        j][0]
-                    fecho_res = at_fecho.automato.get(estado_destino)[-1][0]
 
             # (2e) aqui adiciono a transição, que vai do meu estado para os fechos desse estado,
             # e vejo qual o estado transição deles e pego o fecho #
-            afn.add_transicao(estado, fecho_res,
-                              at_fecho.automato.get(estado)[j][1])
+            afn.add_transicao(estado, fecho_res, simbolo_res)
 
     return afn
 
@@ -381,7 +398,7 @@ def conversao_afd(afn):
         # nenhum estado vai ser esquecido
         estado = pilha.pop()
         count = 0
- 
+
         if "," not in estado:
             for j in range(len(afn.automato.get(estado))):
                 # aqui eu pego o estado da transição (no afn) do estado atual do afd e o símbolo de transição
@@ -399,7 +416,7 @@ def conversao_afd(afn):
         else:
             list_estados = estado.split(",")
             for item in list_estados:
-                for j in range(len(afn.automato.get(item))): # TODO
+                for j in range(len(afn.automato.get(item))):  # TODO
                     # aqui eu uso um dicionário para acumular os valores das transições dos estados em que estou iterando
                     # porque preciso acumular os estados de destino, mas manter o mesmo símbolo
                     estado_destino = afn.automato.get(item)[j][0]
@@ -448,6 +465,7 @@ def conversao_afd(afn):
 
     return afd
 
+
 er = "(((a,b)+(a,e)+).)*"
 er2 = "ab|*a."
 
@@ -461,7 +479,7 @@ print(res2.automato, 'afn')
 print(res2.estado_inicial, 'inicial')
 print(res2.estados_finais, 'finais \n')
 
-res3 = conversao_afd(res2)
-print(res3.automato, 'afd')
-print(res3.estado_inicial, 'inicial')
-print(res3.estados_finais, 'finais')
+# res3 = conversao_afd(res2)
+# print(res3.automato, 'afd')
+# print(res3.estado_inicial, 'inicial')
+# print(res3.estados_finais, 'finais')
