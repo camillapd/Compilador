@@ -63,7 +63,7 @@ for estado in afne.automato:
     # for j in range(len(afne.automato.get(estado))):
     #     pass
     
-print(novo_afne.automato)
+# print(novo_afne.automato)
 
 afn = Automato()
 
@@ -94,3 +94,11 @@ x = grafo.get("SA")
 
 # estado final é o nome do token
 # o programa de saída que pede o código
+
+
+lista = [1,2,3,4,5]
+lista2 = ["A", "B", "C", "D", "E"]
+for i in lista:
+    print(i)
+    for j in lista2:
+        print(j)

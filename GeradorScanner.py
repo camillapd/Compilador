@@ -12,7 +12,7 @@ class Automato:
             self.automato[estado] = []
 
     def add_transicao(self, estado1, estado2, valor):
-        if estado1 in self.automato and (estado2, valor) not in self.automato.get(estado1):
+        if (estado2 != "" and valor != "") and (estado1 in self.automato and (estado2, valor) not in self.automato.get(estado1)):
             self.automato[estado1].append((estado2, valor))
 
 
@@ -31,9 +31,13 @@ def tem_transicoes_vazias(transicoes):
 
 # percorre as transições de um automato para achar os estados que tem transições vazias
 def achar_transicoes_vazias(transicoes):
+    transicoes_vazias = ""
+
     for j in range(len(transicoes)):
         if transicoes[j][1] == 'e':
-            return transicoes[j][0]
+            transicoes_vazias = transicoes[j][0] + ',' + transicoes_vazias
+
+    return transicoes_vazias
 
 
 # percorre o atne para calcular a árvore o valor do fecho
@@ -283,7 +287,7 @@ def construcao_subconjuntos(afne):
             # 2- converto para lista e removo espaços em branco
             # 3- converto pra string colocando vírgulas de novo para separar os estados
             fecho_e = list(set(res.split(',')))
-            # fecho_e.remove("")
+            fecho_e.remove("")
             fecho_e = ",".join(fecho_e)
 
             at_fecho.add_transicao(estado, fecho_e, 'fecho (e)')
@@ -314,17 +318,16 @@ def construcao_subconjuntos(afne):
         fecho_res = ""
         simbolo_res = ""
 
-        # não faço o loop pelo último elemento da lista (fecho e)
-        for j in range(len(at_fecho.automato.get(estado))-1):
-            for simbolo in lista_simbolos:  # possivelmente gambiarra
-                # (2b) eu preciso olhar para o valor do fecho na transição atual #
-                # e.g: S1 --a--> S2 e fecho (e) S1 = {S1,S2,S3,S4} :: eu pego o segundo valor
-                # então checo se esse valor é uma lista de estados se for eu coloco os valores em uma lista e itero por eles
-                if "," in fecho_estado:
-                    list_fecho = fecho_estado.split(",")
-                    for fecho in list_fecho:
-                        # aqui eu checo se tem mais de uma transição nesse estado
-                        # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
+        for simbolo in lista_simbolos:  # possivelmente gambiarra
+            # (2b) eu preciso olhar para o valor do fecho na transição atual #
+            # e.g: S1 --a--> S2 e fecho (e) S1 = {S1,S2,S3,S4} :: eu pego o segundo valor
+            # então checo se esse valor é uma lista de estados se for eu coloco os valores em uma lista e itero por eles
+            if "," in fecho_estado:
+                list_fecho = fecho_estado.split(",")
+                for fecho in list_fecho:
+                    # aqui eu checo se tem mais de uma transição nesse estado
+                    # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
+                    for j in range(len(at_fecho.automato.get(fecho))-1):
                         if len(at_fecho.automato.get(fecho)) > 1 and at_fecho.automato.get(fecho)[j][1] == simbolo:
                             # (2c) agora com o valor do fecho, eu salvo o estado em que ele vai com a transição que quero #
                             # (2d) com o estado destino eu pego o fecho deste estado #
@@ -337,22 +340,27 @@ def construcao_subconjuntos(afne):
                             if fecho_destino not in fecho_res:
                                 # como tem mais de um estado em que estou olhando o fecho, aqui junto todos
                                 fecho_res = fecho_destino + ',' + fecho_res
-                                # para remover a última vírgula
-                                fecho_res = fecho_res[:-1]
-                else:
-                    # aqui eu checo se tem mais de uma transição nesse estado
-                    # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
-                    if len(at_fecho.automato.get(fecho_estado)) > 1 and at_fecho.automato.get(fecho_estado)[j][1] == simbolo:
+
+                # (2e) aqui adiciono a transição, que vai do meu estado para os fechos desse estado,
+                # e vejo qual o estado transição deles e pego o fecho #
+                if fecho_res != "" and fecho_res[-1] == ",": # para remover a última vírgula
+                    fecho_res = fecho_res[:-1] 
+                afn.add_transicao(estado, fecho_res, simbolo_res)
+                fecho_res = ""
+            else:
+                # aqui eu checo se tem mais de uma transição nesse estado
+                # porque se tiver uma só é o fecho e não quero contar isso nas minhas setinhas
+                for j in range(len(at_fecho.automato.get(fecho_estado))-1):
+                    if len(at_fecho.automato.get(fecho_estado)) > 1 and at_fecho.automato.get(fecho_estado)[0][1] == simbolo:
                         # mesmo que (2c) e (2d)
                         simbolo_res = simbolo
-                        estado_destino = at_fecho.automato.get(fecho_estado)[
-                            j][0]
-                        fecho_res = at_fecho.automato.get(
-                            estado_destino)[-1][0]
+                        estado_destino = at_fecho.automato.get(fecho_estado)[0][0]
+                        fecho_res = at_fecho.automato.get(estado_destino)[-1][0]
 
-            # (2e) aqui adiciono a transição, que vai do meu estado para os fechos desse estado,
-            # e vejo qual o estado transição deles e pego o fecho #
-            afn.add_transicao(estado, fecho_res, simbolo_res)
+                # (2f) aqui adiciono a transição (segundo caso)
+                if fecho_res != "" and fecho_res[-1] == ",":
+                    fecho_res = fecho_res[:-1] 
+                afn.add_transicao(estado, fecho_res, simbolo_res)
 
     return afn
 
@@ -454,13 +462,13 @@ er = "(((a,b)+(a,c)+).)*"
 er2 = "ab|*a."
 er3 = "ab|*a.b.b."
 
-res = algoritmo_thompson(er3, "er")
-print(res.automato, 'afne')
+res = algoritmo_thompson(er2, "er")
+print(res.automato, '\n ~~~~ AFNE')
 print(res.estado_inicial, 'inicial')
 print(res.estados_finais, 'finais \n')
 
 res2 = construcao_subconjuntos(res)
-print(res2.automato, 'afn')
+print(res2.automato, '\n ~~~~ AFN')
 print(res2.estado_inicial, 'inicial')
 print(res2.estados_finais, 'finais \n')
 
