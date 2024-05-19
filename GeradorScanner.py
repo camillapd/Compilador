@@ -233,8 +233,26 @@ def algoritmo_thompson(pilha, nome):
             afn.estados_finais.append(estado_final)
 
             pilha_afn.append(afn)
+        elif pilha[i] == "?":
+            afn1 = pilha_afn.pop()
+            afn = Automato()
+            afn.estado_inicial = afn1.estado_inicial
+
+            for estado in afn1.automato:
+                if estado in afn1.estados_finais:
+                    afn.estados_finais.append(estado)
+                for j in range(len(afn1.automato.get(estado))):
+                    afn.add_estado(estado)
+                    afn.add_transicao(estado, afn1.automato.get(estado)[
+                                      j][0], afn1.automato.get(estado)[j][1])
+
+            # adiciona transições vazias do estado inicial direto para o final
+            for i in len(afn.estados_finais):
+                afn.add_transicao(afn.estado_inicial,
+                                  afn.estados_finais[i], "e")
+
+            pilha_afn.append(afn)
         else:  # caso é uma letra do alfabeto
-            # por alguma razão quando passo para lista ele conta o escape do \ tambédm (\\) então
             if pilha[i] == "\\":
                 simbolo = pilha[i+1]
             else:
@@ -471,24 +489,44 @@ def conversao_afd(afn, nome):
 
 
 # er = "(((a,b)+(a,c)+).)*"
-# er2 = "ab|*a."
+# er2 = "ab|*a." = (a|b)*.a
 # er3 = "ab|*a.b.b."
 
-er1 = ["letter", "letter", "*", "."]
-token1 = "ID"
+er1 = ["LET", "DATA", "|", "READ", "|", "RESTORE", "|", "DIM", "|",
+       "IF", "|", "THEN", "|", "ELSE", "|",
+       "FOR", "|", "TO", "|", "STEP", "|", "NEXT", "|",
+       "WHILE", "|", "WEND", "|", "REPEAT", "|", "UNTIL", "|",
+       "DO", "|", "LOOP", "|", "UNTIL", "|",
+       "GOTO", "|", "GOSUB", "|", "RETURN", "|", "ON", "|",
+       "LIST", "|", "PRINT", "|", "INPUT", "|", "TAB", "|", "SPC", "|",
+       "ABS", "|", "ATN", "|", "COS", "|", "EXP", "|", "INT", "|", "LOG", "|", "RAND", "|", "SIN", "|", "SQR", "|", "TAN", "|",
+       "REM", "|", "USR", "|", "CALL", "|", "TRON", "|", "ASM", "|"]
+token1 = "keywords"
 
+er2 = ["A", "B", "|", "C", "|", "D", "|", "E", "|", "F", "|", "G", "|", "H", "|", "I", "|", "J", "|",
+       "K", "|", "L", "|", "M", "|", "N", "|", "O", "|", "P", "|", "Q", "|",
+       "R", "|", "S", "|", "T", "|", "U", "|", "V", "|", "W", "|", "X", "|", "Y", "|", "Z", "|",
+       "0", "|", "1", "|", "2", "|", "3", "|", "4", "|", "5", "|", "6", "|", "7", "|", "8", "|", "9", "|", "?", "."]
+token2 = "ID"
+
+er3 = ["<>", ">=", "|", "<=", "|", "\\+", "|", "-", "|", "\\*", "|", "/", "|",]
+token3 = "operators"
+
+er4 = ["0", "1", "|", "2", "|", "3", "|", "4", "|", "5", "|", "6", "|", "7", "|", "8", "|", "9", "|", "\\.",
+       "0", "1", "|", "2", "|", "3", "|", "4", "|", "5", "|", "6", "|", "7", "|", "8", "|", "9", "|", "+", "."]
+token4 = "number"
 
 res = algoritmo_thompson(er1, token1)
 print(res.automato, '\n ~~~~ AFNE')
 print(res.estado_inicial, 'inicial')
 print(res.estados_finais, 'finais \n')
 
-# res2 = construcao_subconjuntos(res)
-# print(res2.automato, '\n ~~~~ AFN')
-# print(res2.estado_inicial, 'inicial')
-# print(res2.estados_finais, 'finais \n')
+res2 = construcao_subconjuntos(res)
+print(res2.automato, '\n ~~~~ AFN')
+print(res2.estado_inicial, 'inicial')
+print(res2.estados_finais, 'finais \n')
 
-# res3 = conversao_afd(res2, token)
-# print(res3.automato, 'afd')
-# print(res3.estado_inicial, 'inicial')
-# print(res3.estados_finais, 'finais')
+res3 = conversao_afd(res2, token1)
+print(res3.automato, 'afd')
+print(res3.estado_inicial, 'inicial')
+print(res3.estados_finais, 'finais')
